@@ -7,7 +7,7 @@ A change in a stimulus that will be just noticeable is a constant ratio of the o
 ## Requirements
 Must have Python 3+
 Create and activate Python3 virtual env.
-'''bash
+'''console
 python3 -m venv venv
 
 venv/bin/activate
