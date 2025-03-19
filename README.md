@@ -5,10 +5,12 @@ Auditory test that measures how large a frequency difference is needed for relia
 A change in a stimulus that will be just noticeable is a constant ratio of the original stimulus.
 
 ## Requirements
-Must have Python 3+
+Must have Python 3+ interpeter.
 Create and activate Python3 virtual env.
-`python3 -m venv venv
-venv/bin/activate`
+Enter in bash terminal:
+`python3 -m venv venv`
+then:
+`venv/bin/activate`
 If using a windows machine, you must have microsoft visual studio C++ compiler SDK installed prior to installing dependencies.
 If using linux/unix environment continue with installing packages from requiements.txt file `pip install -r requirements.txt`.
 
