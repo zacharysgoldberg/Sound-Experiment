@@ -7,9 +7,9 @@ A change in a stimulus that will be just noticeable is a constant ratio of the o
 ## Requirements
 Must have Python 3+
 Create and activate Python3 virtual env.
-'python3 -m venv venv
+`python3 -m venv venv
 
-venv/bin/activate'
+venv/bin/activate`
 If using a windows machine, you must have microsoft visual studio C++ compiler SDK installed prior to installing dependencies.
 If using linux/unix environment continue with installing packages from requiements.txt file `pip install -r requirements.txt`.
 
