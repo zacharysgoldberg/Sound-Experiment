@@ -19,4 +19,4 @@ If using linux/unix environment continue with installing packages from requiemen
 `pip install -r requirements.txt`.
 
 ## Testing locally
-Once dependencies installed, run `python freq_sounds.py` in a bash terminal.
+Once dependencies installed, run `python freq_sounds.py` in terminal.
