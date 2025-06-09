@@ -10,6 +10,7 @@ Create and activate Python3 virtual env.
 Enter in bash terminal:
 
 `python3 -m venv venv`
+
 `venv/bin/activate`
 
 If using a windows machine, you must have microsoft visual studio C++ compiler SDK installed prior to installing dependencies.
