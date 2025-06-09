@@ -60,14 +60,14 @@ f = 600
 df = 5
 time = 0.5
 stepf = 0.2
-nReverse = 3
+n_reverse = 3
 max_volume = 16000
 sr = 44100
 correct = []
 subject_response = []
 # trial_accuracy = []
 staircase = []
-nIncorrect = 0     # Incorrect response tracker
+n_incorrect = 0     # Incorrect response tracker
 accurate = 0
 
 base_tone = pure_tone(f, time, sr=sr)
@@ -76,7 +76,7 @@ base_tone = base_tone * max_volume / np.max(np.abs(base_tone))
 base_tone = base_tone.astype(int)
 print('Pure Tone: ', base_tone)
 
-while nIncorrect < nReverse:
+while n_incorrect < n_reverse:
     freq_position = rng.integers(1, 3)
     if freq_position == 1:
         test_tone = pure_tone(f - df, time, sr=sr)
@@ -101,7 +101,7 @@ while nIncorrect < nReverse:
     if trial_response == freq_position:
         accurate += 1
     else:
-        nIncorrect += 1
+        n_incorrect += 1
         df += stepf
     if accurate == 2:
         # trial_accuracy = 0
