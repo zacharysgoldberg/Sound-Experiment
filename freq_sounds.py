@@ -2,6 +2,7 @@ import numpy as np
 from numpy import random
 from matplotlib import pyplot as plt
 import simpleaudio as sa
+import time
 
 # A pure tone
 
@@ -14,8 +15,8 @@ def pure_tone(f, time=0.5, sr=44100):
 
 f = 300
 sr = 44100
-time = 0.5
-tone = pure_tone(f, time)
+tone_time = 0.5
+tone = pure_tone(f, tone_time)
 tone = tone * 16000 / np.max(np.abs(tone))
 tone = tone.astype(int)
 sa.play_buffer(tone, 1, 2, sr)
@@ -41,11 +42,11 @@ def silent_tone(f, df, time, sr=44100):
 
 
 f = 300
-time = 0.5
+tone_time = 0.5
 df = 2
 max_amplitude = 8000
 sr = 44100
-scale = silent_tone(f, df, time)
+scale = silent_tone(f, df, tone_time)
 scale = scale * max_amplitude / np.max(np.abs(scale))
 scale = scale.astype(np.int16)
 sa.play_buffer(scale, 1, 2, sr)
@@ -58,19 +59,19 @@ print('Silent Tone: ', scale)
 rng = random.default_rng(seed=1100)
 f = 600
 df = 5
-time = 0.5
+tone_time = 0.5
 stepf = 0.2
 nReverse = 3
 max_volume = 16000
 sr = 44100
 correct = []
 subject_response = []
-# trial_accuracy = []
+trial_accuracy = []
 staircase = []
 nIncorrect = 0     # Incorrect response tracker
 accurate = 0
 
-base_tone = pure_tone(f, time, sr=sr)
+base_tone = pure_tone(f, tone_time, sr=sr)
 # reduce the volume for safety.
 base_tone = base_tone * max_volume / np.max(np.abs(base_tone))
 base_tone = base_tone.astype(int)
@@ -79,15 +80,18 @@ print('Pure Tone: ', base_tone)
 while nIncorrect < nReverse:
     freq_position = rng.integers(1, 3)
     if freq_position == 1:
-        test_tone = pure_tone(f - df, time, sr=sr)
+        test_tone = pure_tone(f - df, tone_time, sr=sr)
         test_tone = test_tone * max_volume / np.max(np.abs(test_tone))
         test_tone = test_tone.astype(int)
     else:
-        test_tone = pure_tone(f + df, time, sr=sr)
+        test_tone = pure_tone(f + df, tone_time, sr=sr)
         test_tone = test_tone * max_volume / np.max(np.abs(test_tone))
         test_tone = test_tone.astype(int)
     play_tone = sa.play_buffer(base_tone, 1, 2, sr)
     play_tone.wait_done()
+
+    time.sleep(2)
+
     play_tone = sa.play_buffer(test_tone, 1, 2, sr)
     play_tone.wait_done()
     print('Which tone was the higher frequency?')
@@ -104,10 +108,10 @@ while nIncorrect < nReverse:
         nIncorrect += 1
         df += stepf
     if accurate == 2:
-        # trial_accuracy = 0
+        trial_accuracy = 0
         df -= stepf
     staircase.append(df)
-    # trial_accuracy.append(accurate)
+    trial_accuracy.append(accurate)
     correct.append(freq_position)
     subject_response.append(trial_response)
 
@@ -115,10 +119,10 @@ print('Answer Key:', correct)
 print('Subject responses:', subject_response)
 print('Total accurate:', accurate)
 
-#%%%
+# %%%
 plt.plot(staircase)
 plt.xlabel('Trials')
 plt.ylabel('Difference in Frequency(Hz)')
 plt.title('Frequency is ' + str(f) + ' Hz')
-
+plt.show()
 # %%
