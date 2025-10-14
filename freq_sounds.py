@@ -1,128 +1,184 @@
 import numpy as np
 from numpy import random
-from matplotlib import pyplot as plt
 import simpleaudio as sa
+import pandas as pd
+from matplotlib import pyplot as plt
 import time
+from datetime import datetime
 
-# A pure tone
+# -----------------------------
+# CONFIGURATION
+# -----------------------------
+config = {
+    "base_freq": 600,             # Base frequency in Hz
+    "initial_diff": 5,            # Initial frequency difference
+    "tone_duration": 0.5,         # Duration of each tone in seconds
+    "step_diff": 0.2,             # Step size for staircase adjustment
+    "n_reverse": 3,               # Number of allowed incorrect trials
+    "silence_between_tones": 1.0,  # Seconds of silence between tones
+    "max_volume": 16000,          # Max amplitude for tones
+    "sr": 44100,                  # Sample rate
+    "seed": 1100                  # Random seed
+}
 
+# -----------------------------
+# PARTICIPANT METADATA
+# -----------------------------
+participant_info = {
+    "participant_id": "P001",
+    "session_date": datetime.now(),
+    "headphones_used": False
+}
 
-def pure_tone(f, time=0.5, sr=44100):
-    time_vec = np.linspace(0, time, int(time * sr))
-    test_note = np.sin(f * time_vec * 2 * np.pi)
-    return test_note
-
-
-f = 300
-sr = 44100
-tone_time = 0.5
-tone = pure_tone(f, tone_time)
-tone = tone * 16000 / np.max(np.abs(tone))
-tone = tone.astype(int)
-sa.play_buffer(tone, 1, 2, sr)
-print(tone)
-
-
-# Two tones seperated by silece
-
-def silent_tone(f, df, time, sr=44100):
-    time_vec = np.linspace(0, time, int(time * sr))
-    scale = np.array([])
-    silent_interval = 0.75
-    nsamples_silence = int(silent_interval * sr)
-    silence = np.zeros(nsamples_silence)
-    high_f = f + df / 2
-    low_f = f - df / 2
-    high_tone = np.sin(high_f * time_vec * 2 * np.pi)
-    low_tone = np.sin(low_f * time_vec * 2 * np.pi)
-    h = np.concatenate((high_tone, silence))
-    l = np.concatenate((low_tone, silence))
-    scale = np.concatenate((scale, l, h))
-    return scale
+# -----------------------------
+# TONE GENERATION FUNCTIONS
+# -----------------------------
 
 
-f = 300
-tone_time = 0.5
-df = 2
-max_amplitude = 8000
-sr = 44100
-scale = silent_tone(f, df, tone_time)
-scale = scale * max_amplitude / np.max(np.abs(scale))
-scale = scale.astype(np.int16)
-sa.play_buffer(scale, 1, 2, sr)
-
-print('Silent Tone: ', scale)
+def pure_tone(f, duration=0.5, sr=44100):
+    t = np.linspace(0, duration, int(duration*sr), endpoint=False)
+    tone = np.sin(2 * np.pi * f * t)
+    return tone
 
 
-# Generating random tone
+def play_tone(tone, sr=44100, max_volume=16000):
+    # Scale tone once and ensure contiguous int16 array
+    audio = (tone * max_volume / np.max(np.abs(tone))).astype(np.int16)
+    audio = np.ascontiguousarray(audio)
+    sa.play_buffer(audio, 1, 2, sr).wait_done()
 
-rng = random.default_rng(seed=1100)
-f = 600
-df = 5
-tone_time = 0.5
-stepf = 0.2
-nReverse = 3
-max_volume = 16000
-sr = 44100
-correct = []
-subject_response = []
-trial_accuracy = []
-staircase = []
-nIncorrect = 0     # Incorrect response tracker
+
+# -----------------------------
+# EXPERIMENT INITIALIZATION
+# -----------------------------
+rng = random.default_rng(seed=config["seed"])
+f = config["base_freq"]
+df = config["initial_diff"]
+tone_time = config["tone_duration"]
+stepf = config["step_diff"]
+nReverse = config["n_reverse"]
+max_volume = config["max_volume"]
+sr = config["sr"]
+
+nIncorrect = 0
 accurate = 0
+trial_counter = 0
+trial_data_list = []
 
-base_tone = pure_tone(f, tone_time, sr=sr)
-# reduce the volume for safety.
-base_tone = base_tone * max_volume / np.max(np.abs(base_tone))
-base_tone = base_tone.astype(int)
-print('Pure Tone: ', base_tone)
+# Generate base tone
+base_tone = pure_tone(f, tone_time, sr)
 
+print("\n=== Auditory Frequency Discrimination Experiment ===")
+print("**Use headphones for best results**\n")
+
+# -----------------------------
+# EXPERIMENT LOOP
+# -----------------------------
 while nIncorrect < nReverse:
-    freq_position = rng.integers(1, 3)
+    trial_counter += 1
+    freq_position = rng.integers(1, 3)  # 1=low, 2=high
+
+    # Generate test tone
     if freq_position == 1:
-        test_tone = pure_tone(f - df, tone_time, sr=sr)
-        test_tone = test_tone * max_volume / np.max(np.abs(test_tone))
-        test_tone = test_tone.astype(int)
+        test_tone = pure_tone(f - df, tone_time, sr)
     else:
-        test_tone = pure_tone(f + df, tone_time, sr=sr)
-        test_tone = test_tone * max_volume / np.max(np.abs(test_tone))
-        test_tone = test_tone.astype(int)
-    play_tone = sa.play_buffer(base_tone, 1, 2, sr)
-    play_tone.wait_done()
+        test_tone = pure_tone(f + df, tone_time, sr)
 
-    time.sleep(2)
+    # Play tones
+    play_tone(base_tone, sr, max_volume)
+    time.sleep(config["silence_between_tones"])
+    play_tone(test_tone, sr, max_volume)
 
-    play_tone = sa.play_buffer(test_tone, 1, 2, sr)
-    play_tone.wait_done()
-    print('Which tone was the higher frequency?')
-    print('Enter 1 for the first tone or 2 for the second tone')
+    # Collect user response
     while True:
-        trial_response = int(input())
-        if trial_response == 2 or trial_response == 1:
-            break
-        else:
-            print('Enter a valid input')
-    if trial_response == freq_position:
+        try:
+            resp = int(input("Which tone was higher? (1=first, 2=second): "))
+            if resp in [1, 2]:
+                break
+            else:
+                print("Enter 1 or 2")
+        except ValueError:
+            print("Enter a valid integer (1 or 2)")
+
+    # Check correctness
+    correct = int(resp == freq_position)
+    if correct:
         accurate += 1
+        if accurate == 2:
+            df = max(df - stepf, 0.1)
+            accurate = 0
     else:
         nIncorrect += 1
         df += stepf
-    if accurate == 2:
-        trial_accuracy = 0
-        df -= stepf
-    staircase.append(df)
-    trial_accuracy.append(accurate)
-    correct.append(freq_position)
-    subject_response.append(trial_response)
 
-print('Answer Key:', correct)
-print('Subject responses:', subject_response)
-print('Total accurate:', accurate)
+    # Record trial data
+    trial_data_list.append({
+        "Trial": trial_counter,
+        "Base_Frequency": f,
+        "Frequency_Diff": df,
+        "Freq_Position": freq_position,
+        "Subject_Response": resp,
+        "Correct": correct
+    })
 
-# %%%
-plt.plot(staircase)
-plt.xlabel('Trials')
-plt.ylabel('Difference in Frequency(Hz)')
-plt.title('Frequency is ' + str(f) + ' Hz')
+# -----------------------------
+# DATA ANALYSIS & EXPORT
+# -----------------------------
+df_trials = pd.DataFrame(trial_data_list)
+
+# Merge participant metadata
+for key, val in participant_info.items():
+    df_trials[key] = val
+
+csv_filename = f"auditory_test_{participant_info['participant_id']}.csv"
+df_trials.to_csv(csv_filename, index=False)
+print(f"\nExperiment complete. Data saved to CSV: {csv_filename}")
+
+# -----------------------------
+# PLOTTING
+# -----------------------------
+plt.figure(figsize=(10, 5))
+
+# Plot the staircase line
+plt.plot(df_trials['Trial'], df_trials['Frequency_Diff'],
+         marker='o', label='Frequency Difference', color='blue')
+
+# Plot correct/incorrect markers slightly above the line
+y_offset = df_trials['Frequency_Diff'] * 0.02  # 2% above line
+plt.scatter(df_trials['Trial'], df_trials['Frequency_Diff'] + y_offset,
+            c=df_trials['Correct'].map({0: 'red', 1: 'green'}),
+            label='Correct (green) / Incorrect (red)', s=100, zorder=5, edgecolors='black')
+
+plt.xlabel('Trial')
+plt.ylabel('Frequency Difference (Hz)')
+plt.title(f'Frequency Discrimination Staircase for {f} Hz Base Tone')
+plt.grid(True)
+plt.legend()
 plt.show()
-# %%
+
+# -----------------------------
+# SUMMARY STATISTICS
+# -----------------------------
+total_trials = len(df_trials)
+total_correct = df_trials['Correct'].sum()
+overall_accuracy = total_correct / total_trials * 100
+average_threshold = df_trials['Frequency_Diff'].mean()
+
+print("\n=== SUMMARY STATISTICS ===")
+print(f"Total Trials: {total_trials}")
+print(f"Total Correct Responses: {total_correct}")
+print(f"Overall Accuracy: {overall_accuracy:.2f}%")
+print(f"Average Frequency Difference Threshold: {average_threshold:.2f} Hz")
+
+# Cumulative performance plot
+df_trials['Cumulative_Correct'] = df_trials['Correct'].cumsum()
+
+plt.figure(figsize=(10, 5))
+plt.plot(df_trials['Trial'], df_trials['Cumulative_Correct'],
+         marker='o', color='blue', label='Cumulative Correct')
+plt.xlabel('Trial')
+plt.ylabel('Cumulative Correct Responses')
+plt.title('Cumulative Performance Over Trials')
+plt.grid(True)
+plt.legend()
+plt.show()

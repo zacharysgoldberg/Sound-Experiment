@@ -38,9 +38,16 @@ Weber’s Law states that _the just-noticeable difference in a stimulus is a con
 
 ## Output
 
-- The program collects user responses via terminal input.
-- At the end of the experiment, a graph is displayed showing the progression of frequency differences over trials.
-- Frequency adjustments follow a staircase method to measure perceptual thresholds.
+- User responses are collected via terminal input during the experiment.
+- At the end of the session, a **graphical visualization** is displayed showing the progression of frequency differences across trials:
+  - **Blue line:** Frequency difference (staircase) for each trial.
+  - **Green markers:** Correct responses.
+  - **Red markers:** Incorrect responses.
+- A **cumulative performance plot** is also shown to illustrate learning or trends over the trials.
+- The program calculates **summary statistics**, including:
+  - Overall accuracy (% correct responses)
+  - Average frequency difference threshold
+- All trial data and participant metadata are automatically saved to a **CSV file** for further analysis.
 
 ## Notes
 
