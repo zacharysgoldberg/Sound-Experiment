@@ -33,7 +33,7 @@ Weber’s Law states that _the just-noticeable difference in a stimulus is a con
    ```
 3. **Running the Experiment**
    ```
-   python freq_sounds.py
+   python freq_test.py
    ```
 
 ## Output
