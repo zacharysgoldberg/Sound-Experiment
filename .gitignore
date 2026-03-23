@@ -2,4 +2,4 @@ dist/
 build/
 *.exe
 *.spec
-freq_test.py
+freq_test
